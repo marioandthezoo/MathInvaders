@@ -11,6 +11,8 @@ const GameCanvas = () => {
         lives: 3,
         score: 0,
         level: 1,
+        missionsCompleted: 0,
+        msg: '',
         status: 'START' // START, PLAYING, REVIVE, GAMEOVER, WIN
     });
 
@@ -48,7 +50,7 @@ const GameCanvas = () => {
                     <div className="hud-item current-num">Total: {gameState.current}</div>
                 </div>
                 <div className="hud-group">
-                    <div className="hud-item level">Mission: {gameState.level}</div>
+                    <div className="hud-item missions">Completed: {gameState.missionsCompleted}</div>
                     <div className="hud-item score">Score: {gameState.score}</div>
                     <div className="hud-item lives">Shields: {gameState.lives}</div>
                 </div>
@@ -57,6 +59,12 @@ const GameCanvas = () => {
                 ref={canvasRef}
                 style={{ display: 'block', width: '100%', height: '100%' }}
             />
+
+            {gameState.msg && (
+                <div className="mission-msg-overlay">
+                    <h2 className="mission-msg">{gameState.msg}</h2>
+                </div>
+            )}
 
             {gameState.status === 'START' && (
                 <div className="overlay">

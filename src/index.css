@@ -182,3 +182,46 @@ h1.neon-text {
   color: var(--danger-neon);
   text-shadow: 0 0 10px var(--danger-neon);
 }
+
+.mission-msg-overlay {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  z-index: 50;
+  animation: fadeInOut 2.5s forwards;
+}
+
+.mission-msg {
+  font-size: 3rem;
+  color: var(--success-neon);
+  text-shadow: 0 0 20px var(--success-neon);
+  text-transform: uppercase;
+}
+
+@keyframes fadeInOut {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.5);
+  }
+
+  20% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1.1);
+  }
+
+  80% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(1.2);
+  }
+}
+
+.missions {
+  color: var(--secondary-neon);
+}

@@ -83,6 +83,7 @@ export class GameEngine {
 
         this.aliens = [];
         this.level = 1;
+        this.missionsCompleted = 0;
         this.score = 0;
         this.target = this.generateTarget();
         this.currentNum = 0;
@@ -93,8 +94,11 @@ export class GameEngine {
     }
 
     generateTarget() {
-        // Range between 25 and 100
-        return Math.floor(Math.random() * 76) + 25 + (this.level - 1) * 10;
+        // Start small: Level 1 (0 missions) = 10-20
+        // Increases as missions are completed
+        const base = 10 + (this.missionsCompleted * 10);
+        const variancy = 10 + Math.min(this.missionsCompleted * 5, 50);
+        return Math.floor(Math.random() * variancy) + base;
     }
 
     setupListeners() {
@@ -162,7 +166,8 @@ export class GameEngine {
             lives: this.lives,
             status: this.status,
             level: this.level,
-            score: this.score
+            score: this.score,
+            missionsCompleted: this.missionsCompleted
         });
     }
 
@@ -214,8 +219,9 @@ export class GameEngine {
             a.y += a.speed;
 
             // Collision with player
-            if (a.y + 30 > this.player.y - 20 &&
-                Math.abs(a.x - this.player.x) < 50) {
+            // Collision with player - Tightened Sensitivity
+            if (a.y + 12 > this.player.y - 12 &&
+                Math.abs(a.x - this.player.x) < 30) {
                 this.aliens.splice(i, 1);
                 this.lives--;
                 this.sounds.playLose();
@@ -255,17 +261,28 @@ export class GameEngine {
 
     winMission() {
         this.sounds.playWin();
-        this.level++;
+        this.missionsCompleted++;
+        this.level = Math.floor(this.missionsCompleted / 2) + 1;
         this.target = this.generateTarget();
         this.currentNum = 0;
-        this.status = 'WIN';
+
+        // Continuous flow: stay in PLAYING state
         this.onUpdate({
-            status: 'WIN',
+            missionsCompleted: this.missionsCompleted,
             level: this.level,
             target: this.target,
             current: this.currentNum,
-            score: this.score
+            score: this.score,
+            msg: `MISSION ${this.missionsCompleted} COMPLETE!`
         });
+
+        // Clear aliens for the next mission
+        this.aliens = [];
+
+        // Clear msg after 2.5s
+        setTimeout(() => {
+            this.onUpdate({ msg: '' });
+        }, 2500);
     }
 
     drawPlayer() {
