@@ -156,7 +156,7 @@ export class GameEngine {
         this.canvas.width = width;
         this.canvas.height = height;
         this.player.x = width / 2;
-        this.player.y = height - 110; // Extra clearance for mobile safe areas and menus
+        this.player.y = height - 180; // Significantly higher for mobile finger clearance
     }
 
     init() {
@@ -219,8 +219,10 @@ export class GameEngine {
             a.y += a.speed;
 
             // Collision with player
-            // Collision with player - Tightened Sensitivity
+            // Collision with player - Tightened Sensitivity & "Passed" Check
+            // Ensure alien is roughly at the same horizontal level as the ship (aliens can pass through)
             if (a.y + 12 > this.player.y - 12 &&
+                a.y - 12 < this.player.y + 12 &&
                 Math.abs(a.x - this.player.x) < 30) {
                 this.aliens.splice(i, 1);
                 this.lives--;
