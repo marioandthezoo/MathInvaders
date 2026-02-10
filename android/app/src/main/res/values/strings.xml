@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">MathInvaders</string>
+    <string name="title_activity_main">MathInvaders</string>
+    <string name="package_name">com.mario.mathinvaders</string>
+    <string name="custom_url_scheme">com.mario.mathinvaders</string>
+</resources>

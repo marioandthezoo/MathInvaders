@@ -97,6 +97,7 @@ export class GameEngine {
     }
 
     setupListeners() {
+        // Keyboard Listeners
         window.addEventListener('keydown', (e) => {
             if (e.key === 'ArrowLeft') this.player.movingLeft = true;
             if (e.key === 'ArrowRight') this.player.movingRight = true;
@@ -107,6 +108,33 @@ export class GameEngine {
             if (e.key === 'ArrowLeft') this.player.movingLeft = false;
             if (e.key === 'ArrowRight') this.player.movingRight = false;
         });
+
+        // Touch Listeners (Mobile)
+        this.canvas.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            const touch = e.touches[0];
+            this.handleTouch(touch);
+            if (this.status === 'PLAYING') this.shoot();
+        }, { passive: false });
+
+        this.canvas.addEventListener('touchmove', (e) => {
+            e.preventDefault();
+            const touch = e.touches[0];
+            this.handleTouch(touch);
+        }, { passive: false });
+
+        this.canvas.addEventListener('touchend', (e) => {
+            this.player.movingLeft = false;
+            this.player.movingRight = false;
+        }, { passive: false });
+    }
+
+    handleTouch(touch) {
+        const rect = this.canvas.getBoundingClientRect();
+        const touchX = touch.clientX - rect.left;
+
+        // Follow finger horizontally
+        this.player.x = Math.max(30, Math.min(this.canvas.width - 30, touchX));
     }
 
     shoot() {

@@ -5,7 +5,7 @@
   --secondary-neon: #7000ff;
   --danger-neon: #ff0055;
   --success-neon: #39ff14;
-  --font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  --font-family: 'Courier New', Courier, monospace;
 }
 
 * {
