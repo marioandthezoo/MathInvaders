@@ -50,7 +50,7 @@ const GameCanvas = () => {
                     <div className="hud-item current-num">Total: {gameState.current}</div>
                 </div>
                 <div className="hud-group">
-                    <div className="hud-item missions">Completed: {gameState.missionsCompleted}</div>
+                    <div className="hud-item missions">Mission: {gameState.missionsCompleted + 1}</div>
                     <div className="hud-item score">Score: {gameState.score}</div>
                     <div className="hud-item lives">Shields: {gameState.lives}</div>
                 </div>

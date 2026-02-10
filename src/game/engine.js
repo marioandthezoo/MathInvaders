@@ -94,10 +94,10 @@ export class GameEngine {
     }
 
     generateTarget() {
-        // Start small: Level 1 (0 missions) = 10-20
-        // Increases as missions are completed
-        const base = 10 + (this.missionsCompleted * 10);
-        const variancy = 10 + Math.min(this.missionsCompleted * 5, 50);
+        // Level 1 starts with 15-25, Level 2 starts with 30-50, etc.
+        // Ensuring a more noticeable increase in goal
+        const base = 15 + (this.missionsCompleted * 15);
+        const variancy = 10 + (this.missionsCompleted * 10);
         return Math.floor(Math.random() * variancy) + base;
     }
 
