@@ -1,0 +1,161 @@
+:root {
+  --bg-color: #05070a;
+  --text-color: #e0e0e0;
+  --primary-neon: #00f2ff;
+  --secondary-neon: #7000ff;
+  --danger-neon: #ff0055;
+  --success-neon: #39ff14;
+  --font-family: 'Inter', system-ui, -apple-system, sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background-color: var(--bg-color);
+  color: var(--text-color);
+  font-family: var(--font-family);
+  overflow: hidden;
+  height: 100vh;
+  width: 100vw;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+#root {
+  width: 100%;
+  height: 100%;
+}
+
+.game-container {
+  position: relative;
+  width: 800px;
+  height: 600px;
+  background: black;
+  border: 2px solid var(--primary-neon);
+  box-shadow: 0 0 20px rgba(0, 242, 255, 0.2);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.hud {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  padding: 10px 20px;
+  display: flex;
+  justify-content: space-between;
+  pointer-events: none;
+  z-index: 10;
+}
+
+.hud-item {
+  font-size: 1.2rem;
+  font-weight: bold;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.hud-group {
+  display: flex;
+  gap: 20px;
+}
+
+.target-num {
+  color: var(--primary-neon);
+}
+
+.current-num {
+  color: var(--success-neon);
+}
+
+.lives {
+  color: var(--danger-neon);
+}
+
+.score {
+  color: #ffd700;
+}
+
+.level {
+  color: #c0c0c0;
+}
+
+.overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.85);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 100;
+  text-align: center;
+}
+
+.overlay-content {
+  padding: 40px;
+  border: 2px solid var(--primary-neon);
+  background: rgba(5, 7, 10, 0.9);
+  border-radius: 12px;
+  box-shadow: 0 0 30px rgba(0, 242, 255, 0.3);
+}
+
+h1.neon-text {
+  font-size: 3rem;
+  color: var(--primary-neon);
+  text-shadow: 0 0 10px var(--primary-neon);
+  margin-bottom: 20px;
+}
+
+.glow-button {
+  background: transparent;
+  color: var(--primary-neon);
+  border: 1px solid var(--primary-neon);
+  padding: 12px 24px;
+  font-size: 1.1rem;
+  cursor: pointer;
+  margin-top: 20px;
+  transition: all 0.3s;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+}
+
+.glow-button:hover {
+  background: var(--primary-neon);
+  color: black;
+  box-shadow: 0 0 20px var(--primary-neon);
+}
+
+.math-problem {
+  font-size: 2.5rem;
+  margin: 20px 0;
+  color: var(--success-neon);
+}
+
+.math-input {
+  background: #111;
+  border: 1px solid var(--primary-neon);
+  color: white;
+  padding: 10px;
+  font-size: 1.5rem;
+  width: 100px;
+  text-align: center;
+}
+
+.success-text {
+  color: var(--success-neon);
+  text-shadow: 0 0 10px var(--success-neon);
+}
+
+.danger-text {
+  color: var(--danger-neon);
+  text-shadow: 0 0 10px var(--danger-neon);
+}
