@@ -249,6 +249,7 @@ export class GameEngine {
 
                     if (this.currentNum === this.target) {
                         this.winMission();
+                        return; // Exit loop immediately to avoid undefined access
                     }
                     hit = true;
                     break;
