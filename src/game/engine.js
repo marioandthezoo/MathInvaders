@@ -147,6 +147,13 @@ export class GameEngine {
         this.sounds.playShoot();
     }
 
+    resize(width, height) {
+        this.canvas.width = width;
+        this.canvas.height = height;
+        this.player.x = width / 2;
+        this.player.y = height - 60;
+    }
+
     init() {
         this.onUpdate({
             target: this.target,

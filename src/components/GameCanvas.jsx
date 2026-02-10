@@ -19,6 +19,16 @@ const GameCanvas = () => {
             engineRef.current = new GameEngine(canvasRef.current, (update) => {
                 setGameState(prev => ({ ...prev, ...update }));
             });
+
+            const handleResize = () => {
+                if (canvasRef.current && engineRef.current) {
+                    const { width, height } = canvasRef.current.parentElement.getBoundingClientRect();
+                    engineRef.current.resize(width, height);
+                }
+            };
+
+            window.addEventListener('resize', handleResize);
+            handleResize(); // Initial size
             engineRef.current.init();
         }
 
@@ -26,6 +36,7 @@ const GameCanvas = () => {
             if (engineRef.current) {
                 engineRef.current.stop();
             }
+            window.removeEventListener('resize', () => { });
         };
     }, []);
 
@@ -44,9 +55,7 @@ const GameCanvas = () => {
             </div>
             <canvas
                 ref={canvasRef}
-                width={800}
-                height={600}
-                style={{ display: 'block' }}
+                style={{ display: 'block', width: '100%', height: '100%' }}
             />
 
             {gameState.status === 'START' && (

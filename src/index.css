@@ -33,13 +33,12 @@ body {
 
 .game-container {
   position: relative;
-  width: 800px;
-  height: 600px;
+  width: 100vw;
+  height: 100vh;
   background: black;
-  border: 2px solid var(--primary-neon);
-  box-shadow: 0 0 20px rgba(0, 242, 255, 0.2);
-  border-radius: 8px;
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
 }
 
 .hud {
@@ -55,10 +54,17 @@ body {
 }
 
 .hud-item {
-  font-size: 1.2rem;
+  font-size: 0.9rem;
   font-weight: bold;
   text-transform: uppercase;
-  letter-spacing: 1px;
+  letter-spacing: 0.5px;
+}
+
+@media (min-width: 600px) {
+  .hud-item {
+    font-size: 1.2rem;
+    letter-spacing: 1px;
+  }
 }
 
 .hud-group {
