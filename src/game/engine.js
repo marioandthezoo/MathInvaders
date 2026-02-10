@@ -152,7 +152,7 @@ export class GameEngine {
         this.canvas.width = width;
         this.canvas.height = height;
         this.player.x = width / 2;
-        this.player.y = height - 60;
+        this.player.y = height - 110; // Extra clearance for mobile safe areas and menus
     }
 
     init() {
@@ -366,12 +366,15 @@ export class GameEngine {
 
         // Alien Number - Pure White with Glow for Contrast - Larger Font
         this.ctx.fillStyle = '#ffffff';
-        this.ctx.shadowBlur = 10;
-        this.ctx.shadowColor = '#000000';
+        this.ctx.strokeStyle = '#000000';
+        this.ctx.lineWidth = 4;
         this.ctx.font = 'bold 28px "Courier New"';
         this.ctx.textAlign = 'center';
         this.ctx.textBaseline = 'middle';
-        this.ctx.fillText(a.value > 0 ? `+${a.value}` : a.value, 0, 0);
+
+        const text = a.value > 0 ? `+${a.value}` : a.value;
+        this.ctx.strokeText(text, 0, 0); // Bold black outline
+        this.ctx.fillText(text, 0, 0);   // White fill
         this.ctx.shadowBlur = 0;
 
         this.ctx.restore();
