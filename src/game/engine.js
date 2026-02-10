@@ -93,7 +93,8 @@ export class GameEngine {
     }
 
     generateTarget() {
-        return Math.floor(Math.random() * (10 * this.level)) + (5 * this.level);
+        // Range between 25 and 100
+        return Math.floor(Math.random() * 76) + 25 + (this.level - 1) * 10;
     }
 
     setupListeners() {
@@ -181,10 +182,10 @@ export class GameEngine {
             const isPositive = Math.random() > 0.4;
             const value = Math.floor(Math.random() * 9) + 1;
             this.aliens.push({
-                x: Math.random() * (this.canvas.width - 60) + 30,
-                y: -50,
-                width: 50,
-                height: 50,
+                x: Math.random() * (this.canvas.width - 80) + 40,
+                y: -60,
+                width: 60,
+                height: 60,
                 speed: 1 + Math.random() + (this.level * 0.2),
                 value: isPositive ? value : -value,
                 color: isPositive ? '#39ff14' : '#ff0055',
@@ -213,8 +214,8 @@ export class GameEngine {
             a.y += a.speed;
 
             // Collision with player
-            if (a.y + 20 > this.player.y - 20 &&
-                Math.abs(a.x - this.player.x) < 40) {
+            if (a.y + 30 > this.player.y - 20 &&
+                Math.abs(a.x - this.player.x) < 50) {
                 this.aliens.splice(i, 1);
                 this.lives--;
                 this.sounds.playLose();
@@ -230,7 +231,7 @@ export class GameEngine {
             let hit = false;
             for (let j = this.player.bullets.length - 1; j >= 0; j--) {
                 const b = this.player.bullets[j];
-                if (Math.abs(b.x - a.x) < 25 && Math.abs(b.y - a.y) < 25) {
+                if (Math.abs(b.x - a.x) < 30 && Math.abs(b.y - a.y) < 30) {
                     this.currentNum += a.value;
                     this.score += 100 * this.level;
                     this.aliens.splice(i, 1);
@@ -317,8 +318,8 @@ export class GameEngine {
         this.ctx.save();
         this.ctx.translate(a.x, a.y);
 
-        // Pixel Art Alien (High Contrast)
-        const pixelSize = 4;
+        // Pixel Art Alien (High Contrast) - Slightly Larger
+        const pixelSize = 6;
         this.ctx.fillStyle = a.color;
 
         let alienMap = [];
@@ -363,11 +364,11 @@ export class GameEngine {
             });
         });
 
-        // Alien Number - Pure White with Glow for Contrast
+        // Alien Number - Pure White with Glow for Contrast - Larger Font
         this.ctx.fillStyle = '#ffffff';
-        this.ctx.shadowBlur = 8;
+        this.ctx.shadowBlur = 10;
         this.ctx.shadowColor = '#000000';
-        this.ctx.font = 'bold 22px "Courier New"';
+        this.ctx.font = 'bold 28px "Courier New"';
         this.ctx.textAlign = 'center';
         this.ctx.textBaseline = 'middle';
         this.ctx.fillText(a.value > 0 ? `+${a.value}` : a.value, 0, 0);

@@ -106,12 +106,29 @@ body {
   text-align: center;
 }
 
-.overlay-content {
+.overlay-content,
+.revive-content {
   padding: 40px;
   border: 2px solid var(--primary-neon);
   background: rgba(5, 7, 10, 0.9);
   border-radius: 12px;
   box-shadow: 0 0 30px rgba(0, 242, 255, 0.3);
+}
+
+.revive-content {
+  margin-top: -15vh;
+  /* Raise higher */
+}
+
+.revive-header {
+  font-size: 2.5rem;
+  color: var(--danger-neon);
+  text-shadow: 0 0 10px var(--danger-neon);
+  margin-bottom: 20px;
+}
+
+.button-container {
+  margin-top: 20px;
 }
 
 h1.neon-text {

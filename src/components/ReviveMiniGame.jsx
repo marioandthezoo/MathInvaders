@@ -5,10 +5,16 @@ const ReviveMiniGame = ({ onSolve }) => {
     const [input, setInput] = useState('');
 
     useEffect(() => {
-        const a = Math.floor(Math.random() * 10) + 1;
-        const b = Math.floor(Math.random() * 10) + 1;
+        let a = Math.floor(Math.random() * 10) + 1;
+        let b = Math.floor(Math.random() * 10) + 1;
         const ops = ['+', '-'];
         const op = ops[Math.floor(Math.random() * ops.length)];
+
+        // Ensure result is not negative for subtractions
+        if (op === '-' && a < b) {
+            [a, b] = [b, a];
+        }
+
         const answer = op === '+' ? a + b : a - b;
         setProblem({ a, b, op, answer });
     }, []);
@@ -24,21 +30,25 @@ const ReviveMiniGame = ({ onSolve }) => {
 
     return (
         <div className="overlay revive-screen">
-            <h2>SYSTEM FAILURE!</h2>
-            <p>Solve to reboot systems:</p>
-            <div className="math-problem">
-                {problem.a} {problem.op} {problem.b} = ?
+            <div className="revive-content">
+                <h2 className="revive-header">SYSTEM FAILURE!</h2>
+                <p>Solve to reboot systems:</p>
+                <div className="math-problem">
+                    {problem.a} {problem.op} {problem.b} = ?
+                </div>
+                <form onSubmit={handleSubmit}>
+                    <input
+                        type="number"
+                        value={input}
+                        onChange={(e) => setInput(e.target.value)}
+                        autoFocus
+                        className="math-input"
+                    />
+                    <div className="button-container">
+                        <button type="submit" className="glow-button">REBOOT</button>
+                    </div>
+                </form>
             </div>
-            <form onSubmit={handleSubmit}>
-                <input
-                    type="number"
-                    value={input}
-                    onChange={(e) => setInput(e.target.value)}
-                    autoFocus
-                    className="math-input"
-                />
-                <button type="submit">REBOOT</button>
-            </form>
         </div>
     );
 };
