@@ -90,6 +90,16 @@ export class GameEngine {
         this.lives = 3;
         this.status = 'START';
 
+        // Boss Related
+        this.isBossLevel = false;
+        this.bossHP = 100;
+        this.bossMaxHP = 100;
+        this.bossX = canvas.width / 2;
+        this.bossY = -150;
+        this.bossDir = 1;
+        this.bossSpeed = 2;
+        this.bossSize = 120;
+
         this.setupListeners();
     }
 
@@ -167,7 +177,8 @@ export class GameEngine {
             status: this.status,
             level: this.level,
             score: this.score,
-            missionsCompleted: this.missionsCompleted
+            missionsCompleted: this.missionsCompleted,
+            bossHP: this.isBossLevel ? this.bossHP : null
         });
     }
 
@@ -182,16 +193,19 @@ export class GameEngine {
     }
 
     spawnAlien() {
+        if (this.isBossLevel) return; // No random spawns during Boss
+
         const spawnChance = 0.01 + (this.level * 0.005);
         if (Math.random() < spawnChance && this.aliens.length < 5 + this.level) {
             const isPositive = Math.random() > 0.4;
-            const value = Math.floor(Math.random() * 9) + 1;
+            const value = Math.floor(Math.random() * (9 + this.level)) + 1;
             this.aliens.push({
                 x: Math.random() * (this.canvas.width - 80) + 40,
                 y: -60,
                 width: 60,
                 height: 60,
-                speed: 1 + Math.random() + (this.level * 0.2),
+                // Speed scales with missions
+                speed: 1 + Math.random() + (this.missionsCompleted * 0.3),
                 value: isPositive ? value : -value,
                 color: isPositive ? '#39ff14' : '#ff0055',
                 type: Math.floor(Math.random() * 3) // Different alien looks
@@ -199,8 +213,30 @@ export class GameEngine {
         }
     }
 
+    spawnBossMinion(val) {
+        this.aliens.push({
+            x: this.bossX,
+            y: this.bossY + 50,
+            width: 40,
+            height: 40,
+            speed: 3 + Math.random() * 2,
+            value: val,
+            color: val > 0 ? '#39ff14' : '#ff0055',
+            type: 0
+        });
+    }
+
     update() {
         if (this.status !== 'PLAYING') return;
+
+        // Boss Movement
+        if (this.isBossLevel) {
+            if (this.bossY < 100) this.bossY += 1;
+            this.bossX += this.bossSpeed * this.bossDir;
+            if (this.bossX > this.canvas.width - 60 || this.bossX < 60) {
+                this.bossDir *= -1;
+            }
+        }
 
         // Movement
         if (this.player.movingLeft && this.player.x > 30) this.player.x -= this.player.speed;
@@ -209,7 +245,31 @@ export class GameEngine {
         // Bullets
         this.player.bullets.forEach((b, i) => {
             b.y -= b.speed;
-            if (b.y < 0) this.player.bullets.splice(i, 1);
+            if (b.y < 0) {
+                this.player.bullets.splice(i, 1);
+                return;
+            }
+
+            // Boss Hit detection
+            if (this.isBossLevel && Math.abs(b.x - this.bossX) < 60 && Math.abs(b.y - this.bossY) < 50) {
+                this.bossHP--;
+                this.player.bullets.splice(i, 1);
+                this.sounds.playHit();
+
+                // Release minion on hit
+                const diff = this.target - this.currentNum;
+                if (diff !== 0) {
+                    // Release an alien with a part of the difference or a small random if diff is small
+                    let val = Math.sign(diff) * (Math.floor(Math.random() * 5) + 1);
+                    if (Math.abs(diff) <= 5) val = diff;
+                    this.spawnBossMinion(val);
+                }
+
+                this.onUpdate({ bossHP: this.bossHP });
+                if (this.bossHP <= 0) {
+                    this.winMission();
+                }
+            }
         });
 
         // Aliens
@@ -265,27 +325,90 @@ export class GameEngine {
     winMission() {
         this.sounds.playWin();
         this.missionsCompleted++;
-        this.level = Math.floor(this.missionsCompleted / 2) + 1;
-        this.target = this.generateTarget();
+
+        const wasBoss = this.isBossLevel;
+        this.isBossLevel = !wasBoss && (this.missionsCompleted % 3 === 0);
+
+        if (this.isBossLevel) {
+            this.bossHP = 100 + (this.missionsCompleted * 10);
+            this.bossMaxHP = this.bossHP;
+            this.bossY = -150;
+            this.target = Math.floor(Math.random() * 50) + 50;
+            this.msg = "BOSS ENCOUNTER!";
+        } else {
+            this.level = Math.floor(this.missionsCompleted / 2) + 1;
+            this.target = this.generateTarget();
+            this.msg = `MISSION ${this.missionsCompleted} COMPLETE!`;
+        }
+
         this.currentNum = 0;
 
-        // Continuous flow: stay in PLAYING state
         this.onUpdate({
             missionsCompleted: this.missionsCompleted,
             level: this.level,
             target: this.target,
             current: this.currentNum,
             score: this.score,
-            msg: `MISSION ${this.missionsCompleted} COMPLETE!`
+            msg: this.msg,
+            isBoss: this.isBossLevel,
+            bossHP: this.isBossLevel ? this.bossHP : null
         });
 
-        // Clear aliens for the next mission
         this.aliens = [];
 
-        // Clear msg after 2.5s
         setTimeout(() => {
             this.onUpdate({ msg: '' });
         }, 2500);
+    }
+
+    drawBoss() {
+        if (!this.isBossLevel) return;
+        this.ctx.save();
+        this.ctx.translate(this.bossX, this.bossY);
+
+        // HP Bar
+        this.ctx.fillStyle = '#333';
+        this.ctx.fillRect(-60, -80, 120, 10);
+        this.ctx.fillStyle = '#ff0055';
+        this.ctx.fillRect(-60, -80, 120 * (this.bossHP / this.bossMaxHP), 10);
+
+        // Tentacle Alien Body (Pixel Art)
+        const pixelSize = 8;
+        this.ctx.fillStyle = '#ff00ff'; // Neon Purple/Magenta Boss
+
+        const bossMap = [
+            [0, 0, 1, 1, 1, 1, 0, 0],
+            [0, 1, 1, 1, 1, 1, 1, 0],
+            [1, 1, 0, 1, 1, 0, 1, 1],
+            [1, 1, 1, 1, 1, 1, 1, 1],
+            [1, 0, 1, 0, 1, 0, 1, 1],
+            [0, 1, 0, 1, 0, 1, 0, 0],
+            [1, 0, 0, 0, 0, 0, 0, 1],
+            [1, 0, 0, 0, 0, 0, 0, 1]
+        ];
+
+        bossMap.forEach((row, rIdx) => {
+            row.forEach((cell, cIdx) => {
+                if (cell === 1) {
+                    const px = (cIdx - 4) * pixelSize;
+                    const py = (rIdx - 4) * pixelSize;
+                    this.ctx.fillRect(px, py, pixelSize, pixelSize);
+                }
+            });
+        });
+
+        // Wavy Tentacles
+        this.ctx.strokeStyle = '#ff00ff';
+        this.ctx.lineWidth = 4;
+        for (let i = 0; i < 4; i++) {
+            this.ctx.beginPath();
+            this.ctx.moveTo((i - 1.5) * 30, 30);
+            const wave = Math.sin(Date.now() / 200 + i) * 20;
+            this.ctx.quadraticCurveTo((i - 1.5) * 30 + wave, 50, (i - 1.5) * 30, 80);
+            this.ctx.stroke();
+        }
+
+        this.ctx.restore();
     }
 
     drawPlayer() {
@@ -413,6 +536,9 @@ export class GameEngine {
 
         // Player
         this.drawPlayer();
+
+        // Boss
+        this.drawBoss();
 
         // Bullets
         this.ctx.fillStyle = '#fff';

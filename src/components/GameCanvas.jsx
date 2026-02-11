@@ -77,13 +77,16 @@ const GameCanvas = () => {
             )}
 
             {gameState.status === 'REVIVE' && (
-                <ReviveMiniGame onSolve={(success) => {
-                    if (success) {
-                        engineRef.current.revive();
-                    } else {
-                        engineRef.current.gameOver();
-                    }
-                }} />
+                <ReviveMiniGame
+                    level={gameState.level}
+                    onSolve={(success) => {
+                        if (success) {
+                            engineRef.current.revive();
+                        } else {
+                            engineRef.current.gameOver();
+                        }
+                    }}
+                />
             )}
 
             {gameState.status === 'WIN' && (

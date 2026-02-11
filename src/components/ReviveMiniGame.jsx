@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from 'react';
 
-const ReviveMiniGame = ({ onSolve }) => {
+const ReviveMiniGame = ({ onSolve, level = 1 }) => {
     const [problem, setProblem] = useState({ a: 0, b: 0, op: '+', answer: 0 });
     const [input, setInput] = useState('');
 
     useEffect(() => {
-        let a = Math.floor(Math.random() * 10) + 1;
-        let b = Math.floor(Math.random() * 10) + 1;
+        // Difficulty scales with level
+        const range = 10 + (level * 5);
+        let a = Math.floor(Math.random() * range) + 1;
+        let b = Math.floor(Math.random() * range) + 1;
         const ops = ['+', '-'];
         const op = ops[Math.floor(Math.random() * ops.length)];
 
@@ -17,7 +19,7 @@ const ReviveMiniGame = ({ onSolve }) => {
 
         const answer = op === '+' ? a + b : a - b;
         setProblem({ a, b, op, answer });
-    }, []);
+    }, [level]);
 
     const handleSubmit = (e) => {
         e.preventDefault();
