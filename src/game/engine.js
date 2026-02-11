@@ -100,6 +100,9 @@ export class GameEngine {
         this.bossSpeed = 2;
         this.bossSize = 120;
 
+        this.bossImg = new Image();
+        this.bossImg.src = '/src/assets/boss.jpg';
+
         this.setupListeners();
     }
 
@@ -215,11 +218,11 @@ export class GameEngine {
 
     spawnBossMinion(val) {
         this.aliens.push({
-            x: this.bossX,
+            x: this.bossX + (Math.random() * 40 - 20), // Slight horizontal spread
             y: this.bossY + 50,
             width: 40,
             height: 40,
-            speed: 3 + Math.random() * 2,
+            speed: 0.5 + Math.random() * 0.5, // Much slower as requested
             value: val,
             color: val > 0 ? '#39ff14' : '#ff0055',
             type: 0
@@ -256,13 +259,13 @@ export class GameEngine {
                 this.player.bullets.splice(i, 1);
                 this.sounds.playHit();
 
-                // Release minion on hit
+                // Release BOTH red and green aliens slowly
                 const diff = this.target - this.currentNum;
                 if (diff !== 0) {
-                    // Release an alien with a part of the difference or a small random if diff is small
-                    let val = Math.sign(diff) * (Math.floor(Math.random() * 5) + 1);
-                    if (Math.abs(diff) <= 5) val = diff;
-                    this.spawnBossMinion(val);
+                    // Positive minion (Green)
+                    this.spawnBossMinion(Math.floor(Math.random() * 5) + 1);
+                    // Negative minion (Red)
+                    this.spawnBossMinion(-(Math.floor(Math.random() * 5) + 1));
                 }
 
                 this.onUpdate({ bossHP: this.bossHP });
@@ -364,48 +367,25 @@ export class GameEngine {
     drawBoss() {
         if (!this.isBossLevel) return;
         this.ctx.save();
-        this.ctx.translate(this.bossX, this.bossY);
 
-        // HP Bar
+        // HP Bar (Keep at top)
         this.ctx.fillStyle = '#333';
-        this.ctx.fillRect(-60, -80, 120, 10);
+        this.ctx.fillRect(this.bossX - 60, this.bossY - 80, 120, 10);
         this.ctx.fillStyle = '#ff0055';
-        this.ctx.fillRect(-60, -80, 120 * (this.bossHP / this.bossMaxHP), 10);
+        this.ctx.fillRect(this.bossX - 60, this.bossY - 80, 120 * (this.bossHP / this.bossMaxHP), 10);
 
-        // Tentacle Alien Body (Pixel Art)
-        const pixelSize = 8;
-        this.ctx.fillStyle = '#ff00ff'; // Neon Purple/Magenta Boss
-
-        const bossMap = [
-            [0, 0, 1, 1, 1, 1, 0, 0],
-            [0, 1, 1, 1, 1, 1, 1, 0],
-            [1, 1, 0, 1, 1, 0, 1, 1],
-            [1, 1, 1, 1, 1, 1, 1, 1],
-            [1, 0, 1, 0, 1, 0, 1, 1],
-            [0, 1, 0, 1, 0, 1, 0, 0],
-            [1, 0, 0, 0, 0, 0, 0, 1],
-            [1, 0, 0, 0, 0, 0, 0, 1]
-        ];
-
-        bossMap.forEach((row, rIdx) => {
-            row.forEach((cell, cIdx) => {
-                if (cell === 1) {
-                    const px = (cIdx - 4) * pixelSize;
-                    const py = (rIdx - 4) * pixelSize;
-                    this.ctx.fillRect(px, py, pixelSize, pixelSize);
-                }
-            });
-        });
-
-        // Wavy Tentacles
-        this.ctx.strokeStyle = '#ff00ff';
-        this.ctx.lineWidth = 4;
-        for (let i = 0; i < 4; i++) {
-            this.ctx.beginPath();
-            this.ctx.moveTo((i - 1.5) * 30, 30);
-            const wave = Math.sin(Date.now() / 200 + i) * 20;
-            this.ctx.quadraticCurveTo((i - 1.5) * 30 + wave, 50, (i - 1.5) * 30, 80);
-            this.ctx.stroke();
+        // Draw Boss Image
+        if (this.bossImg.complete) {
+            this.ctx.drawImage(
+                this.bossImg,
+                this.bossX - 80,
+                this.bossY - 80,
+                160, 160
+            );
+        } else {
+            // Fallback while loading
+            this.ctx.fillStyle = '#ff00ff';
+            this.ctx.fillRect(this.bossX - 60, this.bossY - 60, 120, 120);
         }
 
         this.ctx.restore();
