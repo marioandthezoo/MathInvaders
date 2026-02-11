@@ -98,10 +98,10 @@ export class GameEngine {
         this.bossY = -150;
         this.bossDir = 1;
         this.bossSpeed = 2;
-        this.bossSize = 120;
+        this.bossSize = 120; // Default, will be updated dynamically
 
         this.bossImg = new Image();
-        this.bossImg.src = '/src/assets/boss.jpg';
+        this.bossImg.src = '/boss.jpg';
 
         this.setupListeners();
     }
@@ -335,7 +335,8 @@ export class GameEngine {
         if (this.isBossLevel) {
             this.bossHP = 100 + (this.missionsCompleted * 10);
             this.bossMaxHP = this.bossHP;
-            this.bossY = -150;
+            this.bossY = -200;
+            this.bossSize = this.canvas.width / 4; // Large: 1/4 of screen width
             this.target = Math.floor(Math.random() * 50) + 50;
             this.msg = "BOSS ENCOUNTER!";
         } else {
@@ -366,26 +367,33 @@ export class GameEngine {
 
     drawBoss() {
         if (!this.isBossLevel) return;
+        const s = this.bossSize;
+
         this.ctx.save();
+        this.ctx.translate(this.bossX, this.bossY);
 
-        // HP Bar (Keep at top)
+        // HP Bar
         this.ctx.fillStyle = '#333';
-        this.ctx.fillRect(this.bossX - 60, this.bossY - 80, 120, 10);
+        this.ctx.fillRect(-s / 2, -s / 2 - 20, s, 10);
         this.ctx.fillStyle = '#ff0055';
-        this.ctx.fillRect(this.bossX - 60, this.bossY - 80, 120 * (this.bossHP / this.bossMaxHP), 10);
+        this.ctx.fillRect(-s / 2, -s / 2 - 20, s * (this.bossHP / this.bossMaxHP), 10);
 
-        // Draw Boss Image
+        // Draw Boss Image (No rotation as per user's latest request to use specific image)
         if (this.bossImg.complete) {
+            // The new image is quite wide, adjust drawing to maintain aspect ratio or fit
+            const aspect = this.bossImg.width / this.bossImg.height;
+            const drawHeight = s / aspect;
             this.ctx.drawImage(
                 this.bossImg,
-                this.bossX - 80,
-                this.bossY - 80,
-                160, 160
+                -s / 2,
+                -drawHeight / 2,
+                s,
+                drawHeight
             );
         } else {
             // Fallback while loading
             this.ctx.fillStyle = '#ff00ff';
-            this.ctx.fillRect(this.bossX - 60, this.bossY - 60, 120, 120);
+            this.ctx.fillRect(-s / 2, -s / 2, s, s / 2);
         }
 
         this.ctx.restore();
