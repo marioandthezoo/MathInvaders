@@ -41,6 +41,11 @@ body {
   flex-direction: column;
 }
 
+.game-view {
+  position: absolute;
+  inset: 0;
+}
+
 .hud {
   position: absolute;
   top: 0;
@@ -51,6 +56,8 @@ body {
   justify-content: space-between;
   pointer-events: none;
   z-index: 10;
+  background: linear-gradient(to bottom, rgba(0, 0, 0, 0.6), transparent);
+  text-shadow: 0 0 8px currentColor, 0 1px 2px #000;
 }
 
 .hud-item {
@@ -58,6 +65,17 @@ body {
   font-weight: bold;
   text-transform: uppercase;
   letter-spacing: 0.5px;
+}
+
+@media (max-width: 599px) {
+  .hud-group {
+    flex-direction: column;
+    gap: 2px !important;
+  }
+
+  .hud-group:last-child {
+    align-items: flex-end;
+  }
 }
 
 @media (min-width: 600px) {
@@ -98,7 +116,8 @@ body {
   left: 0;
   width: 100%;
   height: 100%;
-  background: rgba(0, 0, 0, 0.85);
+  background: radial-gradient(ellipse at center, rgba(0, 0, 0, 0.35), rgba(0, 0, 0, 0.75));
+  backdrop-filter: blur(2px);
   display: flex;
   justify-content: center;
   align-items: center;
@@ -224,4 +243,50 @@ h1.neon-text {
 
 .missions {
   color: var(--secondary-neon);
+}
+
+.boss-bar {
+  position: absolute;
+  top: 48px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(70vw, 480px);
+  z-index: 10;
+  pointer-events: none;
+  text-align: center;
+  color: var(--danger-neon);
+  font-weight: bold;
+  letter-spacing: 3px;
+  font-size: 0.8rem;
+  text-shadow: 0 0 8px var(--danger-neon);
+}
+
+.boss-bar-track {
+  margin-top: 4px;
+  height: 10px;
+  border: 1px solid rgba(255, 0, 85, 0.7);
+  background: rgba(40, 0, 10, 0.6);
+  border-radius: 5px;
+  overflow: hidden;
+}
+
+.boss-bar-fill {
+  height: 100%;
+  background: linear-gradient(to right, #ff0055, #ff7a2a);
+  box-shadow: 0 0 12px #ff0055;
+  transition: width 0.15s ease-out;
+}
+
+.damage-flash {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 20;
+  box-shadow: inset 0 0 120px 40px rgba(255, 0, 60, 0.75);
+  animation: damageFlash 0.6s ease-out forwards;
+}
+
+@keyframes damageFlash {
+  from { opacity: 1; }
+  to { opacity: 0; }
 }

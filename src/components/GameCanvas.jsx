@@ -3,7 +3,7 @@ import { GameEngine } from '../game/engine';
 import ReviveMiniGame from './ReviveMiniGame';
 
 const GameCanvas = () => {
-    const canvasRef = useRef(null);
+    const viewRef = useRef(null);
     const engineRef = useRef(null);
     const [gameState, setGameState] = useState({
         target: 0,
@@ -13,37 +13,30 @@ const GameCanvas = () => {
         level: 1,
         missionsCompleted: 0,
         msg: '',
+        bossHP: null,
+        bossMaxHP: 100,
+        hitAt: 0,
         status: 'START' // START, PLAYING, REVIVE, GAMEOVER, WIN
     });
 
     useEffect(() => {
-        if (canvasRef.current && !engineRef.current) {
-            engineRef.current = new GameEngine(canvasRef.current, (update) => {
-                setGameState(prev => ({ ...prev, ...update }));
-            });
-
-            const handleResize = () => {
-                if (canvasRef.current && engineRef.current) {
-                    const { width, height } = canvasRef.current.parentElement.getBoundingClientRect();
-                    engineRef.current.resize(width, height);
-                }
-            };
-
-            window.addEventListener('resize', handleResize);
-            handleResize(); // Initial size
-            engineRef.current.init();
-        }
+        const engine = new GameEngine(viewRef.current, (update) => {
+            setGameState(prev => ({ ...prev, ...update }));
+        });
+        engineRef.current = engine;
+        if (import.meta.env.DEV) window.__engine = engine;
+        engine.init();
 
         return () => {
-            if (engineRef.current) {
-                engineRef.current.stop();
-            }
-            window.removeEventListener('resize', () => { });
+            engine.dispose();
+            engineRef.current = null;
         };
     }, []);
 
     return (
         <div className="game-container">
+            <div ref={viewRef} className="game-view" />
+
             <div className="hud">
                 <div className="hud-group">
                     <div className="hud-item target-num">Goal: {gameState.target}</div>
@@ -55,10 +48,20 @@ const GameCanvas = () => {
                     <div className="hud-item lives">Shields: {gameState.lives}</div>
                 </div>
             </div>
-            <canvas
-                ref={canvasRef}
-                style={{ display: 'block', width: '100%', height: '100%' }}
-            />
+
+            {gameState.bossHP !== null && gameState.status === 'PLAYING' && (
+                <div className="boss-bar">
+                    <span>MOTHERSHIP</span>
+                    <div className="boss-bar-track">
+                        <div
+                            className="boss-bar-fill"
+                            style={{ width: `${Math.max(0, gameState.bossHP / gameState.bossMaxHP) * 100}%` }}
+                        />
+                    </div>
+                </div>
+            )}
+
+            {gameState.hitAt > 0 && <div key={gameState.hitAt} className="damage-flash" />}
 
             {gameState.msg && (
                 <div className="mission-msg-overlay">
