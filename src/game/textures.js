@@ -87,18 +87,20 @@ export function labelTexture(value) {
     g.strokeStyle = positive ? '#39ff14' : '#ff2255';
     g.stroke();
 
-    g.font = 'bold 80px "Segoe UI", Arial, sans-serif';
+    const font = '700 66px Orbitron, "Segoe UI", Arial, sans-serif';
+    g.font = font;
     g.textAlign = 'center';
     g.textBaseline = 'middle';
     g.lineWidth = 10;
     g.strokeStyle = '#000';
-    g.strokeText(text, 128, 68);
+    g.strokeText(text, 128, 66);
     g.fillStyle = '#fff';
-    g.fillText(text, 128, 68);
+    g.fillText(text, 128, 66);
 
     const tex = new THREE.CanvasTexture(c);
     tex.colorSpace = THREE.SRGBColorSpace;
     tex.anisotropy = 4;
-    labelCache.set(key, tex);
+    // Only cache once the web font is ready, so early badges get redrawn in Orbitron
+    if (!document.fonts || document.fonts.check(font)) labelCache.set(key, tex);
     return tex;
 }

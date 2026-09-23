@@ -164,24 +164,66 @@ export class SoundManager {
         this.osc('triangle', 1760 + Math.random() * 600, t + 0.02, 0.45, sparkle);
     }
 
-    // Boss armour hit: metallic FM clang
-    playBossHit(pan = 0) {
+    // Sci-fi hull impact: energy zap, deep thud and crackling electrical discharge
+    playImpact(pan = 0, level = 1) {
         const t = this.ctx.currentTime;
-        const bus = this.out(pan * 0.5, 0.45);
-        const amp = this.ctx.createGain();
-        amp.connect(bus);
-        this.env(amp.gain, t, 0.22, 0.002, 0.45);
-        const carrier = this.osc('sine', 310, t, 0.5, amp);
-        const mod = this.ctx.createOscillator();
-        const modGain = this.ctx.createGain();
-        mod.frequency.value = 310 * 2.76;
-        modGain.gain.setValueAtTime(900, t);
-        modGain.gain.exponentialRampToValueAtTime(10, t + 0.4);
-        mod.connect(modGain);
-        modGain.connect(carrier.frequency);
-        mod.start(t);
-        mod.stop(t + 0.5);
-        this.playExplosion(0.35, pan, 0.4);
+        const bus = this.out(pan * 0.5, 0.5);
+
+        // Energy bolt striking the shields: detuned saws diving fast
+        const zap = this.ctx.createGain();
+        const zlp = this.filter('lowpass', 5000, 3);
+        zlp.frequency.setValueAtTime(5000, t);
+        zlp.frequency.exponentialRampToValueAtTime(300, t + 0.14);
+        zap.connect(zlp);
+        zlp.connect(bus);
+        this.env(zap.gain, t, 0.12 * level, 0.002, 0.14);
+        [-20, 20].forEach((d) => {
+            const o = this.osc('sawtooth', 1100, t, 0.16, zap);
+            o.detune.value = d;
+            o.frequency.exponentialRampToValueAtTime(90, t + 0.14);
+        });
+
+        // Muffled thud through the hull
+        const thud = this.ctx.createGain();
+        const bp = this.filter('bandpass', 900, 1.2);
+        bp.frequency.setValueAtTime(900, t);
+        bp.frequency.exponentialRampToValueAtTime(120, t + 0.3);
+        thud.connect(bp);
+        bp.connect(bus);
+        this.env(thud.gain, t, 0.45 * level, 0.003, 0.3);
+        this.noise(t, 0.35, thud);
+
+        const sub = this.ctx.createGain();
+        sub.connect(bus);
+        this.env(sub.gain, t, 0.5 * level, 0.004, 0.32);
+        const s = this.osc('sine', 75, t, 0.35, sub);
+        s.frequency.exponentialRampToValueAtTime(32, t + 0.3);
+
+        // Electrical crackle: high noise chopped by a fast square LFO
+        const crackle = this.ctx.createGain();
+        const hp = this.filter('highpass', 2800, 0.7);
+        const chop = this.ctx.createGain();
+        chop.gain.value = 0;
+        const lfo = this.ctx.createOscillator();
+        lfo.type = 'square';
+        lfo.frequency.setValueAtTime(38, t);
+        lfo.frequency.linearRampToValueAtTime(14, t + 0.4);
+        const lfoDepth = this.ctx.createGain();
+        lfoDepth.gain.value = 0.5;
+        lfo.connect(lfoDepth);
+        lfoDepth.connect(chop.gain);
+        crackle.connect(hp);
+        hp.connect(chop);
+        chop.connect(bus);
+        this.env(crackle.gain, t + 0.03, 0.22 * level, 0.01, 0.38);
+        this.noise(t + 0.03, 0.45, crackle);
+        lfo.start(t);
+        lfo.stop(t + 0.5);
+    }
+
+    // Boss hull hit
+    playBossHit(pan = 0) {
+        this.playImpact(pan, 0.8);
     }
 
     // Deep filtered explosion with a sub-bass drop
@@ -205,35 +247,25 @@ export class SoundManager {
         o.frequency.exponentialRampToValueAtTime(28, t + duration);
     }
 
-    // Shield hit: distorted impact + two-tone warning
+    // Shield hit: heavy impact + descending two-tone alert
     playLose() {
         const t = this.ctx.currentTime;
-        const bus = this.out(0, 0.3);
+        const bus = this.out(0, 0.4);
+        this.playImpact(0, 1.3);
+        this.playExplosion(0.6, 0, 0.5);
 
-        const shaper = this.ctx.createWaveShaper();
-        const curve = new Float32Array(1024);
-        for (let i = 0; i < 1024; i++) {
-            const x = (i / 1023) * 2 - 1;
-            curve[i] = Math.tanh(x * 4);
-        }
-        shaper.curve = curve;
-        const amp = this.ctx.createGain();
-        amp.connect(shaper);
-        shaper.connect(bus);
-        this.env(amp.gain, t, 0.5, 0.004, 0.4);
-        const o = this.osc('sawtooth', 110, t, 0.45, amp);
-        o.frequency.exponentialRampToValueAtTime(45, t + 0.4);
-
-        [880, 660].forEach((f, i) => {
+        [740, 554].forEach((f, i) => {
             const g = this.ctx.createGain();
-            const bp = this.filter('bandpass', f, 4);
-            g.connect(bp);
-            bp.connect(bus);
-            const st = t + 0.12 + i * 0.14;
-            this.env(g.gain, st, 0.18, 0.01, 0.12);
-            this.osc('square', f, st, 0.14, g);
+            const lp = this.filter('lowpass', 2400, 1);
+            g.connect(lp);
+            lp.connect(bus);
+            const st = t + 0.18 + i * 0.16;
+            this.env(g.gain, st, 0.07, 0.01, 0.16);
+            [-6, 6].forEach((d) => {
+                const o = this.osc('sawtooth', f, st, 0.18, g);
+                o.detune.value = d;
+            });
         });
-        this.playExplosion(0.5, 0, 0.6);
     }
 
     // Mission complete: shimmering major-7 arpeggio over a soft pad
