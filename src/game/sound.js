@@ -138,7 +138,7 @@ export class SoundManager {
         this.noise(t, 0.04, click);
     }
 
-    // Alien destroyed: sub thump + filtered debris crackle + sparkly tail
+    // Alien destroyed: sub thump + filtered debris crackle + debris fizz
     playHit(pan = 0) {
         const t = this.ctx.currentTime;
         const bus = this.out(pan * 0.6, 0.35);
@@ -158,10 +158,15 @@ export class SoundManager {
         this.env(crackle.gain, t, 0.35, 0.003, 0.5);
         this.noise(t, 0.6, crackle);
 
-        const sparkle = this.ctx.createGain();
-        sparkle.connect(bus);
-        this.env(sparkle.gain, t + 0.02, 0.05, 0.01, 0.4);
-        this.osc('triangle', 1760 + Math.random() * 600, t + 0.02, 0.45, sparkle);
+        // Debris fizz: bright noise that sweeps down, no pitched tone (pitched = metallic)
+        const fizz = this.ctx.createGain();
+        const hp = this.filter('highpass', 5000, 0.5);
+        hp.frequency.setValueAtTime(6000, t + 0.02);
+        hp.frequency.exponentialRampToValueAtTime(1500, t + 0.35);
+        fizz.connect(hp);
+        hp.connect(bus);
+        this.env(fizz.gain, t + 0.02, 0.12, 0.01, 0.3);
+        this.noise(t + 0.02, 0.35, fizz);
     }
 
     // Sci-fi hull impact: energy zap, deep thud and crackling electrical discharge
