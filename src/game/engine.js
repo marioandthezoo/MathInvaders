@@ -20,6 +20,8 @@ const SHIP_SPEED = 16;
 const HIT_RADIUS = 1.25;
 const SHIP_HALF_WIDTH = 1.3;
 const MAX_ALIENS = 18;
+const WARP_TIME = 3.4;     // seconds for a full hyperspace jump
+const WARP_SWAP = 1.7;     // moment (under the flash) when the new sector appears
 // Chase-cam for wide screens; a steeper, higher view for tall phone screens
 const CAM_WIDE = { offset: new THREE.Vector3(0, 6.5, 12), target: new THREE.Vector3(0, 0, -16) };
 const CAM_TALL = { offset: new THREE.Vector3(0, 11, 14), target: new THREE.Vector3(0, 0, -15) };
@@ -55,6 +57,11 @@ export class GameEngine {
         this.bossZ = -140;
         this.bossDir = 1;
         this.bossHitFlash = 0;
+
+        // Hyperspace jump between missions (null when not jumping)
+        this.warpT = null;
+        this.warpSwapped = false;
+        this.warpAmount = 0;
 
         this.setupRenderer();
         this.setupScene();
@@ -107,9 +114,10 @@ export class GameEngine {
         const rim = new THREE.DirectionalLight('#5f8cff', 1.6); // cool back-light from deep space
         rim.position.set(3, 2, -10);
         scene.add(rim);
-        scene.add(new THREE.HemisphereLight('#3a4a7a', '#0a0610', 0.6));
+        const hemi = new THREE.HemisphereLight('#3a4a7a', '#0a0610', 0.6);
+        scene.add(hemi);
 
-        this.scenery = new Scenery(scene, sunDir);
+        this.scenery = new Scenery(scene, sunDir, { sun, rim, hemi });
         this.explosions = new Explosions(scene);
 
         this.ship = createPlayerShip();
@@ -221,6 +229,7 @@ export class GameEngine {
         const offset = CAM_TALL.offset.clone().lerp(CAM_WIDE.offset, tall);
         this.camTarget = CAM_TALL.target.clone().lerp(CAM_WIDE.target, tall);
         cam.fov = THREE.MathUtils.lerp(56, 50, tall);
+        this.baseFov = cam.fov;
         cam.aspect = aspect;
         const baseDist = offset.length();
         const halfTan = Math.tan(THREE.MathUtils.degToRad(cam.fov / 2));
@@ -250,13 +259,15 @@ export class GameEngine {
             missionsCompleted: this.missionsCompleted,
             bossHP: this.isBossLevel ? this.bossHP : null,
             bossMaxHP: this.bossMaxHP,
+            sector: this.scenery.sector.name,
         });
     }
 
     start() {
         this.sounds.resume();
+        this.sounds.startAmbience();
         this.status = 'PLAYING';
-        this.onUpdate({ status: this.status });
+        this.onUpdate({ status: this.status, sectorAt: Date.now() });
     }
 
     stop() {
@@ -270,6 +281,7 @@ export class GameEngine {
         for (let i = this.aliens.length - 1; i >= 0; i--) {
             if (this.aliens[i].z > -20) this.destroyAlien(i, true);
         }
+        this.sounds.playRevive();
         this.onUpdate({ status: this.status, lives: this.lives });
     }
 
@@ -277,8 +289,14 @@ export class GameEngine {
         this.status = 'GAMEOVER';
         this.explosions.spawn(this.ship.group.position, new THREE.Color('#ff8a2a'), 2.5);
         this.ship.group.visible = false;
-        this.sounds.playExplosion(1);
+        this.sounds.stopAmbience();
+        this.sounds.playExplosion(2.2, this.pan(this.player.x), 1.2);
         this.onUpdate({ status: 'GAMEOVER' });
+    }
+
+    // Stereo position (-1 left .. 1 right) for a point on the playfield
+    pan(x) {
+        return x / this.fieldHalfWidth;
     }
 
     shoot() {
@@ -289,7 +307,7 @@ export class GameEngine {
         mesh.position.set(x, 0.05, -1.3);
         this.scene.add(mesh);
         this.bullets.push({ x, z: -1.3, prevZ: -1.3, mesh });
-        this.sounds.playShoot();
+        this.sounds.playShoot(this.pan(x));
     }
 
     // ---------- Aliens ----------
@@ -322,6 +340,7 @@ export class GameEngine {
 
     spawnAlien(dt) {
         if (this.isBossLevel) return; // No random spawns during Boss
+        if (this.warpT !== null) return; // Nothing spawns mid-jump
 
         // Original chance was per 60fps frame; convert to a per-second rate
         const spawnChance = (0.01 + (this.level * 0.005)) * 60 * dt;
@@ -370,8 +389,8 @@ export class GameEngine {
     update(dt) {
         if (this.status !== 'PLAYING') return;
 
-        // Boss movement: fly in, then strafe side to side
-        if (this.isBossLevel) {
+        // Boss movement: fly in (once we've arrived in the sector), then strafe side to side
+        if (this.isBossLevel && this.warpT === null) {
             if (this.bossZ < BOSS_Z) this.bossZ = Math.min(BOSS_Z, this.bossZ + 25 * dt);
             const speed = (5 + this.missionsCompleted * 0.3) * dt;
             this.bossX += speed * this.bossDir;
@@ -411,7 +430,7 @@ export class GameEngine {
                 Math.abs(b.x - this.bossX) < 5.5 && b.z <= this.bossZ + 6 && b.prevZ > this.bossZ - 6) {
                 this.bossHP--;
                 this.removeBullet(i);
-                this.sounds.playHit();
+                this.sounds.playBossHit(this.pan(b.x));
                 this.bossHitFlash = 1;
                 this.explosions.spawn(
                     new THREE.Vector3(b.x, 0.5, this.bossZ + 5),
@@ -429,7 +448,7 @@ export class GameEngine {
                 this.onUpdate({ bossHP: this.bossHP });
                 if (this.bossHP <= 0) {
                     this.explosions.spawn(new THREE.Vector3(this.bossX, 0, this.bossZ), new THREE.Color('#ff5a1a'), 5);
-                    this.sounds.playExplosion(1.2);
+                    this.sounds.playExplosion(2.5, this.pan(this.bossX), 1.3);
                     this.winMission();
                     return;
                 }
@@ -467,7 +486,7 @@ export class GameEngine {
                     this.score += 100 * this.level;
                     this.destroyAlien(i);
                     this.removeBullet(j);
-                    this.sounds.playHit();
+                    this.sounds.playHit(this.pan(a.x));
                     this.onUpdate({ current: this.currentNum, score: this.score });
 
                     if (this.currentNum === this.target) {
@@ -522,6 +541,11 @@ export class GameEngine {
         // Everything left on the field goes out with a bang
         for (let i = this.aliens.length - 1; i >= 0; i--) this.destroyAlien(i);
 
+        // Jump to the next sector of space
+        this.warpT = 0;
+        this.warpSwapped = false;
+        this.sounds.playWarp();
+
         clearTimeout(this.msgTimer);
         this.msgTimer = setTimeout(() => {
             this.onUpdate({ msg: '' });
@@ -536,11 +560,12 @@ export class GameEngine {
 
         // Ship: bank into turns, gentle hover
         const ship = this.ship;
-        ship.group.position.set(p.x, Math.sin(t * 2) * 0.08, 0);
+        const w = this.warpAmount;
+        ship.group.position.set(p.x, Math.sin(t * 2) * 0.08, -w * 1.5);
         ship.body.rotation.z = p.bank;
         ship.body.rotation.y = p.bank * 0.25;
         ship.body.rotation.x = Math.sin(t * 1.4) * 0.03;
-        const thrust = this.status === 'PLAYING' ? 1 : 0.6;
+        const thrust = (this.status === 'PLAYING' ? 1 : 0.6) + w * 2.5;
         ship.flames.forEach((f, i) => {
             f.material.uniforms.uTime.value = t + i;
             f.scale.set(1, 1, thrust * (0.85 + Math.random() * 0.3));
@@ -569,7 +594,7 @@ export class GameEngine {
 
         // Boss
         const boss = this.boss;
-        boss.group.visible = this.isBossLevel;
+        boss.group.visible = this.isBossLevel && (this.warpT === null || this.warpSwapped);
         if (this.isBossLevel) {
             boss.group.position.set(this.bossX, 2 + Math.sin(t * 0.8) * 0.4, this.bossZ);
             boss.group.rotation.z = -this.bossDir * 0.06;
@@ -582,21 +607,49 @@ export class GameEngine {
         // Camera: slight follow + damage shake
         const cam = this.camera;
         this.shake = Math.max(0, this.shake - dt * 2.5);
-        const s = this.shake * this.shake * 0.6;
+        const s = this.shake * this.shake * 0.6 + w * 0.12;
         cam.position.set(
             this.camBase.x + p.x * 0.25 + (Math.random() - 0.5) * s,
             this.camBase.y + (Math.random() - 0.5) * s,
             this.camBase.z
         );
         cam.lookAt(this.camTarget.x + p.x * 0.2, this.camTarget.y, this.camTarget.z);
+        // Hyperspace: widen the lens and push the glow
+        const fov = this.baseFov + w * 24;
+        if (Math.abs(cam.fov - fov) > 0.01) {
+            cam.fov = fov;
+            cam.updateProjectionMatrix();
+        }
+        this.bloom.strength = 0.7 + w * 0.6;
 
-        this.scenery.update(dt, t, this.status === 'PLAYING' ? 45 : 20);
+        this.scenery.update(dt, t, (this.status === 'PLAYING' ? 45 : 20) + w * 450, w);
         this.explosions.update(dt);
+    }
+
+    updateWarp(dt) {
+        if (this.warpT === null) {
+            this.warpAmount = 0;
+            return;
+        }
+        this.warpT += dt;
+        const t = this.warpT;
+        const up = THREE.MathUtils.smoothstep(t, 0.2, 1.4);
+        const down = 1 - THREE.MathUtils.smoothstep(t, 2.0, WARP_TIME);
+        this.warpAmount = Math.min(up, down);
+
+        if (!this.warpSwapped && t >= WARP_SWAP) {
+            this.warpSwapped = true;
+            this.scenery.setSector(this.missionsCompleted);
+            const now = Date.now();
+            this.onUpdate({ sector: this.scenery.sector.name, sectorAt: now, warpFlashAt: now });
+        }
+        if (t >= WARP_TIME) this.warpT = null;
     }
 
     frame() {
         const dt = Math.min(this.clock.getDelta(), 0.05);
         this.time += dt;
+        this.updateWarp(dt);
         this.update(dt);
         this.animate(dt);
         this.composer.render();

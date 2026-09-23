@@ -290,3 +290,55 @@ h1.neon-text {
   from { opacity: 1; }
   to { opacity: 0; }
 }
+
+.warp-flash {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 30;
+  background: radial-gradient(ellipse at center, #ffffff 0%, rgba(190, 225, 255, 0.9) 35%, rgba(120, 170, 255, 0) 80%);
+  animation: warpFlash 0.9s ease-out forwards;
+}
+
+@keyframes warpFlash {
+  0% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+.sector-banner {
+  position: absolute;
+  left: 50%;
+  top: 30%;
+  transform: translateX(-50%);
+  z-index: 40;
+  pointer-events: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+  animation: sectorBanner 3.2s ease-out forwards;
+}
+
+.sector-label {
+  font-size: 0.8rem;
+  letter-spacing: 6px;
+  color: #9fdcff;
+  text-shadow: 0 0 8px #00b7ff;
+}
+
+.sector-name {
+  font-size: clamp(1.6rem, 7vw, 2.6rem);
+  font-weight: bold;
+  letter-spacing: 4px;
+  text-transform: uppercase;
+  color: #fff;
+  text-shadow: 0 0 18px #00e5ff, 0 2px 4px #000;
+}
+
+@keyframes sectorBanner {
+  0% { opacity: 0; letter-spacing: 20px; }
+  15% { opacity: 1; letter-spacing: 4px; }
+  75% { opacity: 1; }
+  100% { opacity: 0; }
+}

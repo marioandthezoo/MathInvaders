@@ -16,6 +16,9 @@ const GameCanvas = () => {
         bossHP: null,
         bossMaxHP: 100,
         hitAt: 0,
+        sector: '',
+        sectorAt: 0,
+        warpFlashAt: 0,
         status: 'START' // START, PLAYING, REVIVE, GAMEOVER, WIN
     });
 
@@ -61,7 +64,16 @@ const GameCanvas = () => {
                 </div>
             )}
 
-            {gameState.hitAt > 0 && <div key={gameState.hitAt} className="damage-flash" />}
+            {gameState.hitAt > 0 && <div key={`hit-${gameState.hitAt}`} className="damage-flash" />}
+
+            {gameState.warpFlashAt > 0 && <div key={`flash-${gameState.warpFlashAt}`} className="warp-flash" />}
+
+            {gameState.sectorAt > 0 && (
+                <div key={`sector-${gameState.sectorAt}`} className="sector-banner">
+                    <span className="sector-label">ENTERING SECTOR</span>
+                    <span className="sector-name">{gameState.sector}</span>
+                </div>
+            )}
 
             {gameState.msg && (
                 <div className="mission-msg-overlay">
